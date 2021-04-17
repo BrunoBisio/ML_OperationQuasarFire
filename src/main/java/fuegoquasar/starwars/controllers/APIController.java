@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import fuegoquasar.starwars.contracts.ISatellitesService;
+import fuegoquasar.starwars.dtos.SatellitesDto;
 import fuegoquasar.starwars.models.Satellite;
 import fuegoquasar.starwars.models.SatelliteResponse;
 
@@ -22,14 +23,14 @@ public class APIController {
     private ISatellitesService service;
 
     @PostMapping("/")
-    public ResponseEntity<SatelliteResponse> index(@RequestBody Satellite[] satellites) {
-        if (satellites.length < 3) {
+    public ResponseEntity<SatelliteResponse> index(@RequestBody SatellitesDto satellitesDto) {
+        if (satellitesDto.getSatellites().length < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You are missing at least one satellite");
         }
-        if (satellites.length > 3) {
+        if (satellitesDto.getSatellites().length > 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sorry, but I am not prepared for more than 3 satellites");
         }
-        SatelliteResponse body = service.getResponse(satellites);
+        SatelliteResponse body = service.getResponse(satellitesDto.getSatellites());
         return ResponseEntity.ok(body);
     }
 

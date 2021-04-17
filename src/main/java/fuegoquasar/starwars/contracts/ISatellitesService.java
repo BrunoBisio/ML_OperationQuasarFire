@@ -6,7 +6,7 @@ import fuegoquasar.starwars.models.SatelliteResponse;
 
 public interface ISatellitesService {
     
-    public Position getLocation(double distance1, double distance2, double distance3);
+    public Position getLocation(float distance1, float distance2, float distance3);
 
     public String getMessage(String[] message1, String[] message2, String[] message3);
 

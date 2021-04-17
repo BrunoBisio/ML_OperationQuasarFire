@@ -11,121 +11,116 @@ import fuegoquasar.starwars.models.SatelliteResponse;
 public class SatellitesService implements ISatellitesService {
 
     /*
-        (x1, y1) = [-500, -200]
-        (x2, y2) = [100,-100]
-        (x3, y3) = [500, 100]
+    Glosario:
+        [nombreDeSatelite]_p --> indica la posicion del satelite
+        [nombreDeSatelite]_d --> indica el valor de la distancia del satelite
+        [nombreDeSatelite]_m --> indica el mensaje del satelite
     */
-    double x1 = -500;
-    double y1 = -200;
-    double x2 = 100;
-    double y2 = -100;
-    double x3 = 500;
-    double y3 = 100;
 
+    Position kenobi_p = new Position(-500, -200);
+    Position skywalker_p = new Position(100, -100);
+    Position sato_p = new Position(500, 100);
+
+    /***
+     * Para el calculo de getLocation se uso el metodo de trilateración
+     * al final de los calculos se realiza un redondeo de los valores de
+     * x e y con el fin de evitar problemas de precision que puedan ocurrir
+     * en los tipos de datos double y float de java.
+     * Otra opcion para solucionar este problema seria pasar a usar el tipo
+     * de dato BigDecimal.
+     */
     @Override
-    public Position getLocation(double distance1, double distance2, double distance3) {
-        // Busco el resultado de la resta entre las equaciones de las circunferencias 2 y 1
-        // luego de despejar x y reemplazarlo en la equacion de de la circunferencia 1
-        double[] y_roots = getRootsForYAxis(x1, y1, distance1, x2, y2, distance2);
-        // reemplazo los valores 2 valores de y en la equacion de la circunferencia 1
-        double[] x_roots_1 = new double[2];
-        double[] x_roots_2 = new double[2];
-        double x_root = 0;
-        Position position = null;
-
-        // aux_i = (di^2 - xi^2 - yi^2)
-        double aux_1 = pow2(distance1) - pow2(x1) - pow2(y1);
-        double aux_2 = pow2(distance2) - pow2(x2) - pow2(y2);
-
-        for(double y_root: y_roots) {
-            x_roots_1 = getRoots(0, -2 * x1, pow2(y_root) - 2 * y1 * y_root - aux_1);
-            x_roots_2 = getRoots(0, -2 * x2, pow2(y_root) - 2 * y2 * y_root - aux_2);
-            
-            if (contains(x_roots_1[0], x_roots_2)) {
-                x_root = x_roots_1[0];
-            } else if (contains(x_roots_1[1], x_roots_2)) {
-                x_root = x_roots_1[1];
-            } else {
-                // TODO: las distancias ingresadas no son correctas
-            }
-            
-            // si la posicion existe en el diametro significa que encontre la posicion deseada.
-            if (pow2(x_root - x3) + pow2(y_root - y3) == pow2(distance3)) {
-                position = new Position(x_root, y_root);
-                break;
-            }
-        }
-
-        return position;
+    public Position getLocation(float kenobi_d, float skywalker_d, float sato_d) {
+        // P3 - P1
+        Position difPos_31 = subPos(sato_p, kenobi_p);
+        // P2 - P1
+        Position difPos_21 = subPos(skywalker_p, kenobi_p);
+        // d = ‖P2 - P1‖
+        float d = magnitude(difPos_21);
+        // ex = (P2 - P1) / ‖P2 - P1‖
+        Position ex = divEscalar(difPos_21, d);
+        // i = ex(P3 - P1)
+        float i = multiPos(ex, difPos_31);
+        // P3 - P1 - i · ex
+        Position difPos_31i = subPos(difPos_31, multiEscalar(ex, i));
+        // ey = (P3 - P1 - i · ex) / ‖P3 - P1 - i · ex‖
+        Position ey = divEscalar(difPos_31i, magnitude(difPos_31i));
+        // j = ey(P3 - P1)
+        float j = multiPos(ey, difPos_31);
+        // x = (r1^2 - r2^2 + d^2) / 2d
+        float x = (pow2(kenobi_d) - pow2(skywalker_d) + pow2(d)) / (2*d);
+        // y = (r1^2 - r3^2 + i^2 + j^2) / 2j - ix / j
+        float y = ((pow2(kenobi_d) - pow2(sato_d) + pow2(i) + pow2(j)) / (2*j)) - ((i*x) /j);
+        // p1,2 = P1 + x*ex + y*ey
+        Position p = sumPos(kenobi_p, sumPos(multiEscalar(ex, x), multiEscalar(ey, y)));
+        // return position
+        return new Position(Math.round(p.getX()), Math.round(p.getY()));
     }
 
     @Override
-    public String getMessage(String[] message1, String[] message2, String[] message3) {
-        String[] messageOutput;
-        int outputCounter = 0;
+    public String getMessage(String[] kenobi_m, String[] skywalker_m, String[] sato_m) {
+        String output;
         // busco el menor de los arrays
-        int value = Math.min(Math.min(message1.length, message2.length), message3.length);
-        if (value == message1.length) {
-            messageOutput = message1;
-            outputCounter = message1.length-1;
-            for (int i = message2.length-1; i != 0; i--, outputCounter--) {
-                if (message2[i] != "" && messageOutput[outputCounter] == "") {
-                    messageOutput[outputCounter] = message2[i];
-                }
-            }
-            outputCounter = message1.length-1;
-            for (int j = message3.length-1; j != 0; j--, outputCounter--) {
-                if (message3[j] != "" && messageOutput[outputCounter] == "") {
-                    messageOutput[outputCounter] = message2[j];
-                }
-            }
+        int value = Math.min(Math.min(kenobi_m.length, skywalker_m.length), sato_m.length);
+        if (value == kenobi_m.length) {
+            output = getMessageFromArrays(kenobi_m, skywalker_m, sato_m);
+        } else if (value == skywalker_m.length) {
+            output = getMessageFromArrays(skywalker_m, kenobi_m, sato_m);
+        } else {
+            output = getMessageFromArrays(sato_m, kenobi_m, skywalker_m);
         }
-        return "";
+        return output;
     }
 
     @Override
     public SatelliteResponse getResponse(Satellite[] satellites) {
-        // TODO Auto-generated method stub
-        return null;
+        SatelliteResponse response = new SatelliteResponse();
+        response.setMessage(getMessage(satellites[0].getMessage(), satellites[1].getMessage(), satellites[2].getMessage()));
+        response.setPosition(getLocation(satellites[0].getDistance(), satellites[1].getDistance(), satellites[2].getDistance()));
+        return response;
+    }
+    
+    // utils for getMessage
+    private String getMessageFromArrays(String[] baseArray, String[] firstInjection, String[] secondInjection) {
+        addMissingWords(baseArray, firstInjection);
+        addMissingWords(baseArray, secondInjection);
+        return String.join(" ", baseArray).trim();
     }
 
-    /// Siendo la equiacion de una circunferencia
-    ///     (x - xi)^2 + (y-yi)^2 = di^2
-    /// la funcion espera las posiciones de x e y de cada satelite
-    /// y la distancia entre cada posicion y el punto buscado.
-    private double[] getRootsForYAxis(double x1, double y1, double d1, double x2, double y2, double d2) {
-        // acomodo los valores para agrupar x e y
-        // x^2 - 2*xi*x + y^2 - 2*yi*y - (di^2 - xi^2 - yi^2) = 0
-        // aux_i = di^2 - xi^2 - yi^2
-        double aux_1 = pow2(d1) - pow2(x1) - pow2(y1);
-        double aux_2 = pow2(d2) - pow2(x2) - pow2(y2);
-
-        // calculo de A:
-        double a = (aux_2-aux_1) * (y2 - y1) / (x1 - x2);
-        a -= ((2 * (aux_2-aux_1)) / (x1 - x2));
-        a -= (2 * y1);
-        // calculo de B:
-        double b = (pow2(y2 - y1) / pow2(x1 - x2)) + 1;
-        // calculo de C:
-        double c = (pow2(aux_2 - aux_1) / 4 * (x1 - x2)) - aux_1 - x1 * (aux_2 - aux_1) / (x1 - x2);
-        
-        return getRoots(a, b, c);
+    private void addMissingWords(String[] baseArray, String[] injectedArray){
+        for (int i = baseArray.length-1, j = injectedArray.length-1; i != 0; i--, j--) {
+            if (baseArray[i] == "" && injectedArray[j] != "") {
+                baseArray[i] = injectedArray[j];
+            }
+        }
     }
 
-    /// espera los valores para el calculo de las raices de una equacion cuadratrica.
-    private double[] getRoots(double a, double  b, double  c) {
-        double[] roots = new double[2];
-        double sqrt = Math.sqrt(pow2(b) - 4 * a * c);
-        roots[0] = (b + sqrt) / (2 * a);
-        roots[1] = (b - sqrt) / (2 * a);
-        return roots;
+    // utils for getLocation
+    public Position sumPos(Position pos1, Position pos2) {
+        return new Position(pos1.getX() + pos2.getX(), pos1.getY() + pos2.getY());
     }
 
-    private double pow2(double value){
-        return Math.pow(value, 2);
+    public Position subPos(Position pos1, Position pos2) {
+        return new Position(pos1.getX() - pos2.getX(), pos1.getY() - pos2.getY());
     }
 
-    private boolean contains(double value, double[] array) {
-        return value == array[0] || value == array[1];
+    public float magnitude(Position pos) {
+        return (float) Math.sqrt(pow2(pos.getX()) + pow2(pos.getY()));
+    }
+
+    private float pow2(float number) {
+        return number * number;
+    }
+
+    private Position multiEscalar(Position pos, float number) {
+        return new Position(number * pos.getX(), number * pos.getY());
+    }
+
+    private float multiPos(Position pos1, Position pos2) {
+        return pos1.getX() * pos2.getX() + pos1.getY() * pos2.getY();
+    }
+
+    private Position divEscalar(Position pos, float number) {
+        return new Position(pos.getX() / number, pos.getY() / number);
     }
 }

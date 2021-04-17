@@ -5,7 +5,7 @@ public class Satellite {
     private long id;
     private String name;
     private Position position;
-    private double distance;
+    private float distance;
     private String[] message;
     
     public long getId() {
@@ -23,10 +23,10 @@ public class Satellite {
     public void setPosition(Position position) {
         this.position = position;
     }
-    public double getDistance() {
+    public float getDistance() {
         return distance;
     }
-    public void setDistance(double distance) {
+    public void setDistance(float distance) {
         this.distance = distance;
     }
     public String[] getMessage() {
