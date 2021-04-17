@@ -12,7 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import fuegoquasar.starwars.contracts.ISatellitesService;
 import fuegoquasar.starwars.dtos.SatellitesDto;
-import fuegoquasar.starwars.models.Satellite;
 import fuegoquasar.starwars.models.SatelliteResponse;
 
 @RestController
@@ -31,6 +30,8 @@ public class APIController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sorry, but I am not prepared for more than 3 satellites");
         }
         SatelliteResponse body = service.getResponse(satellitesDto.getSatellites());
+        if (body.equals(null))
+            return (ResponseEntity<SatelliteResponse>) ResponseEntity.notFound();
         return ResponseEntity.ok(body);
     }
 

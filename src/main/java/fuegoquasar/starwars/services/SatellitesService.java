@@ -31,30 +31,38 @@ public class SatellitesService implements ISatellitesService {
      */
     @Override
     public Position getLocation(float kenobi_d, float skywalker_d, float sato_d) {
-        // P3 - P1
-        Position difPos_31 = subPos(sato_p, kenobi_p);
-        // P2 - P1
-        Position difPos_21 = subPos(skywalker_p, kenobi_p);
-        // d = ‖P2 - P1‖
-        float d = magnitude(difPos_21);
-        // ex = (P2 - P1) / ‖P2 - P1‖
-        Position ex = divEscalar(difPos_21, d);
-        // i = ex(P3 - P1)
-        float i = multiPos(ex, difPos_31);
-        // P3 - P1 - i · ex
-        Position difPos_31i = subPos(difPos_31, multiEscalar(ex, i));
-        // ey = (P3 - P1 - i · ex) / ‖P3 - P1 - i · ex‖
-        Position ey = divEscalar(difPos_31i, magnitude(difPos_31i));
-        // j = ey(P3 - P1)
-        float j = multiPos(ey, difPos_31);
-        // x = (r1^2 - r2^2 + d^2) / 2d
-        float x = (pow2(kenobi_d) - pow2(skywalker_d) + pow2(d)) / (2*d);
-        // y = (r1^2 - r3^2 + i^2 + j^2) / 2j - ix / j
-        float y = ((pow2(kenobi_d) - pow2(sato_d) + pow2(i) + pow2(j)) / (2*j)) - ((i*x) /j);
-        // p1,2 = P1 + x*ex + y*ey
-        Position p = sumPos(kenobi_p, sumPos(multiEscalar(ex, x), multiEscalar(ey, y)));
+        Position location;
+        try {
+            // P3 - P1
+            Position difPos_31 = subPos(sato_p, kenobi_p);
+            // P2 - P1
+            Position difPos_21 = subPos(skywalker_p, kenobi_p);
+            // d = ‖P2 - P1‖
+            float d = magnitude(difPos_21);
+            // ex = (P2 - P1) / ‖P2 - P1‖
+            Position ex = divEscalar(difPos_21, d);
+            // i = ex(P3 - P1)
+            float i = multiPos(ex, difPos_31);
+            // P3 - P1 - i · ex
+            Position difPos_31i = subPos(difPos_31, multiEscalar(ex, i));
+            // ey = (P3 - P1 - i · ex) / ‖P3 - P1 - i · ex‖
+            Position ey = divEscalar(difPos_31i, magnitude(difPos_31i));
+            // j = ey(P3 - P1)
+            float j = multiPos(ey, difPos_31);
+            // x = (r1^2 - r2^2 + d^2) / 2d
+            float x = (pow2(kenobi_d) - pow2(skywalker_d) + pow2(d)) / (2*d);
+            // y = (r1^2 - r3^2 + i^2 + j^2) / 2j - ix / j
+            float y = ((pow2(kenobi_d) - pow2(sato_d) + pow2(i) + pow2(j)) / (2*j)) - ((i*x) /j);
+            // p = P1 + x*ex + y*ey
+            Position p = sumPos(kenobi_p, sumPos(multiEscalar(ex, x), multiEscalar(ey, y)));
+            // se redondea para tratar de evitar problemas de redondeo generados por el tipo de dato float
+            location = new Position(Math.round(p.getX()), Math.round(p.getY()));
+        }
+        catch(Exception ex) {
+            location = null;
+        }
         // return position
-        return new Position(Math.round(p.getX()), Math.round(p.getY()));
+        return location;
     }
 
     @Override
@@ -75,8 +83,13 @@ public class SatellitesService implements ISatellitesService {
     @Override
     public SatelliteResponse getResponse(Satellite[] satellites) {
         SatelliteResponse response = new SatelliteResponse();
-        response.setMessage(getMessage(satellites[0].getMessage(), satellites[1].getMessage(), satellites[2].getMessage()));
-        response.setPosition(getLocation(satellites[0].getDistance(), satellites[1].getDistance(), satellites[2].getDistance()));
+        Position location = getLocation(satellites[0].getDistance(), satellites[1].getDistance(), satellites[2].getDistance());
+        String message = getMessage(satellites[0].getMessage(), satellites[1].getMessage(), satellites[2].getMessage());
+        if (message.equals(null) || location.equals(null)) {
+            return null;
+        }
+        response.setPosition(location);
+        response.setMessage(message);
         return response;
     }
     
@@ -84,7 +97,10 @@ public class SatellitesService implements ISatellitesService {
     private String getMessageFromArrays(String[] baseArray, String[] firstInjection, String[] secondInjection) {
         addMissingWords(baseArray, firstInjection);
         addMissingWords(baseArray, secondInjection);
-        return String.join(" ", baseArray).trim();
+        if (isComplete(baseArray)) {
+            return String.join(" ", baseArray).trim();
+        }
+        return null;
     }
 
     private void addMissingWords(String[] baseArray, String[] injectedArray){
@@ -93,6 +109,24 @@ public class SatellitesService implements ISatellitesService {
                 baseArray[i] = injectedArray[j];
             }
         }
+    }
+
+    private boolean isComplete(String[] message) {
+        // Para determinar si el mensaje esta completo o no
+        boolean hasContent = false;
+        // Checkeo de no tener una palabra y a continuacion un espacio ["este", ""]
+        for (int i = 0; i < message.length-1; i++) {
+            if (!message[i].isEmpty() && message[i+1].isEmpty()) {
+                return false;
+            }
+            if (!message[i].isEmpty()) {
+                hasContent = true;
+            }
+        }
+        // Checkeo de que la ultima palabra haya podido ser determinada
+        if (hasContent && message[message.length-1].isEmpty())
+            return false;
+        return true;
     }
 
     // utils for getLocation
@@ -120,7 +154,9 @@ public class SatellitesService implements ISatellitesService {
         return pos1.getX() * pos2.getX() + pos1.getY() * pos2.getY();
     }
 
-    private Position divEscalar(Position pos, float number) {
+    private Position divEscalar(Position pos, float number) throws Exception {
+        if (number == 0)
+            throw new Exception("El divisor no puede ser 0");
         return new Position(pos.getX() / number, pos.getY() / number);
     }
 }
