@@ -7,7 +7,7 @@ import fuegoquasar.starwars.contracts.ISatellitesService;
 import fuegoquasar.starwars.models.Position;
 import fuegoquasar.starwars.models.Satellite;
 import fuegoquasar.starwars.models.SatelliteResponse;
-import fuegoquasar.starwars.repositories.ISatelliteRepository;
+import fuegoquasar.starwars.repositories.SatelliteRepository;
 import fuegoquasar.starwars.utils.MathUtils;
 import fuegoquasar.starwars.utils.MessageUtils;
 
@@ -21,7 +21,7 @@ public class SatellitesService implements ISatellitesService {
         [nombreDeSatelite]_m --> indica el mensaje del satelite
     */
     @Autowired
-    private ISatelliteRepository repository;
+    private SatelliteRepository repository;
 
     Position kenobi_p = new Position(-500, -200);
     Position skywalker_p = new Position(100, -100);

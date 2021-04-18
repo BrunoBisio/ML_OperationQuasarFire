@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import fuegoquasar.starwars.contracts.ISatellitesService;
+import fuegoquasar.starwars.models.ErrorResponse;
 import fuegoquasar.starwars.models.Satellite;
 import fuegoquasar.starwars.models.SatelliteResponse;
 
@@ -24,25 +24,24 @@ public class TopSecretSplitController {
     private ISatellitesService service;
 
     @PostMapping("/{satellite_name}")
-    public ResponseEntity<Satellite> index(@RequestBody Satellite satellite, @RequestParam String satellite_name) {
+    public ResponseEntity<Object> index(@RequestBody Satellite satellite, @RequestParam String satellite_name) {
         Satellite savedSatellite = service.save(satellite, satellite_name);
-        if (savedSatellite != null)
-            return ResponseEntity.ok(savedSatellite);
-        return new ResponseEntity<Satellite>(new HttpHeaders(), HttpStatus.BAD_REQUEST);
+        if (savedSatellite == null){
+            ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST, "Ocurrio un error durante el salvado");
+            return new ResponseEntity<Object>(error, new HttpHeaders(), error.getStatus());
+        }
+        
+        return ResponseEntity.ok(savedSatellite);
     }
 
     @GetMapping("/")
-    public ResponseEntity<SatelliteResponse> index() {
-        /*SatelliteResponse response = null;
-        try {
-            SatelliteResponse response = service.getResponse();
-        } catch (Exception ex) {
-            // Ver si puedo obtener cual es la informacion faltante o que informacion si tengo
-        }*/
+    public ResponseEntity<Object> index() {
         SatelliteResponse response = service.getResponse();
-        if (response == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay suficiente información");
-        
+        if (response == null) {
+            ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST, "No hay suficiente información");
+            return new ResponseEntity<Object>(error, new HttpHeaders(), error.getStatus());
+        }
+            
         return ResponseEntity.ok(response);
     }
 }
