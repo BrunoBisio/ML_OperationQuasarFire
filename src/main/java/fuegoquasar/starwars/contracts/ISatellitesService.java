@@ -11,4 +11,8 @@ public interface ISatellitesService {
     public String getMessage(String[] message1, String[] message2, String[] message3);
 
     public SatelliteResponse getResponse(Satellite[] satellites);
+
+    public Satellite save(Satellite satellite, String satellite_name);
+
+    public SatelliteResponse getResponse();
 }

@@ -1,11 +1,15 @@
 package fuegoquasar.starwars.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fuegoquasar.starwars.contracts.ISatellitesService;
 import fuegoquasar.starwars.models.Position;
 import fuegoquasar.starwars.models.Satellite;
 import fuegoquasar.starwars.models.SatelliteResponse;
+import fuegoquasar.starwars.repositories.ISatelliteRepository;
+import fuegoquasar.starwars.utils.MathUtils;
+import fuegoquasar.starwars.utils.MessageUtils;
 
 @Service
 public class SatellitesService implements ISatellitesService {
@@ -16,6 +20,8 @@ public class SatellitesService implements ISatellitesService {
         [nombreDeSatelite]_d --> indica el valor de la distancia del satelite
         [nombreDeSatelite]_m --> indica el mensaje del satelite
     */
+    @Autowired
+    private ISatelliteRepository repository;
 
     Position kenobi_p = new Position(-500, -200);
     Position skywalker_p = new Position(100, -100);
@@ -34,27 +40,27 @@ public class SatellitesService implements ISatellitesService {
         Position location;
         try {
             // P3 - P1
-            Position difPos_31 = subPos(sato_p, kenobi_p);
+            Position difPos_31 = MathUtils.subPos(sato_p, kenobi_p);
             // P2 - P1
-            Position difPos_21 = subPos(skywalker_p, kenobi_p);
+            Position difPos_21 = MathUtils.subPos(skywalker_p, kenobi_p);
             // d = ‖P2 - P1‖
-            float d = magnitude(difPos_21);
+            float d = MathUtils.magnitude(difPos_21);
             // ex = (P2 - P1) / ‖P2 - P1‖
-            Position ex = divEscalar(difPos_21, d);
+            Position ex = MathUtils.divEscalar(difPos_21, d);
             // i = ex(P3 - P1)
-            float i = multiPos(ex, difPos_31);
+            float i = MathUtils.multiPos(ex, difPos_31);
             // P3 - P1 - i · ex
-            Position difPos_31i = subPos(difPos_31, multiEscalar(ex, i));
+            Position difPos_31i = MathUtils.subPos(difPos_31, MathUtils.multiEscalar(ex, i));
             // ey = (P3 - P1 - i · ex) / ‖P3 - P1 - i · ex‖
-            Position ey = divEscalar(difPos_31i, magnitude(difPos_31i));
+            Position ey = MathUtils.divEscalar(difPos_31i, MathUtils.magnitude(difPos_31i));
             // j = ey(P3 - P1)
-            float j = multiPos(ey, difPos_31);
+            float j = MathUtils.multiPos(ey, difPos_31);
             // x = (r1^2 - r2^2 + d^2) / 2d
-            float x = (pow2(kenobi_d) - pow2(skywalker_d) + pow2(d)) / (2*d);
+            float x = (MathUtils.pow2(kenobi_d) - MathUtils.pow2(skywalker_d) + MathUtils.pow2(d)) / (2*d);
             // y = (r1^2 - r3^2 + i^2 + j^2) / 2j - ix / j
-            float y = ((pow2(kenobi_d) - pow2(sato_d) + pow2(i) + pow2(j)) / (2*j)) - ((i*x) /j);
+            float y = ((MathUtils.pow2(kenobi_d) - MathUtils.pow2(sato_d) + MathUtils.pow2(i) + MathUtils.pow2(j)) / (2*j)) - ((i*x) /j);
             // p = P1 + x*ex + y*ey
-            Position p = sumPos(kenobi_p, sumPos(multiEscalar(ex, x), multiEscalar(ey, y)));
+            Position p = MathUtils.sumPos(kenobi_p, MathUtils.sumPos(MathUtils.multiEscalar(ex, x), MathUtils.multiEscalar(ey, y)));
             // se redondea para tratar de evitar problemas de redondeo generados por el tipo de dato float
             location = new Position(Math.round(p.getX()), Math.round(p.getY()));
         }
@@ -93,70 +99,35 @@ public class SatellitesService implements ISatellitesService {
         return response;
     }
     
-    // utils for getMessage
-    private String getMessageFromArrays(String[] baseArray, String[] firstInjection, String[] secondInjection) {
-        addMissingWords(baseArray, firstInjection);
-        addMissingWords(baseArray, secondInjection);
-        if (isComplete(baseArray)) {
+    @Override
+    public Satellite save(Satellite satellite, String satellite_name) {
+        satellite.setName(satellite_name);
+        Satellite savedSatellite = repository.save(satellite);
+        return savedSatellite;
+    }
+
+    @Override
+    public SatelliteResponse getResponse() {
+        // considero que en caso que se haya mas de una vez alguno de los satellites
+        // siempre utilizo la ultima carga de cada uno
+        Satellite kenobi_s = repository.findLastByName("kenobi");
+        Satellite skywalker_s = repository.findLastByName("skywalker");
+        Satellite sato_s = repository.findLastByName("sato");
+        
+        if (kenobi_s == null || skywalker_s == null || sato_s == null) {
+            return null;
+        }
+
+        return getResponse(new Satellite[]{ kenobi_s, skywalker_s, sato_s });
+    }
+    
+    private static String getMessageFromArrays(String[] baseArray, String[] firstInjection, String[] secondInjection) {
+        MessageUtils.addMissingWords(baseArray, firstInjection);
+        MessageUtils.addMissingWords(baseArray, secondInjection);
+        if (MessageUtils.isComplete(baseArray)) {
             return String.join(" ", baseArray).trim();
         }
         return null;
     }
 
-    private void addMissingWords(String[] baseArray, String[] injectedArray){
-        for (int i = baseArray.length-1, j = injectedArray.length-1; i != 0; i--, j--) {
-            if (baseArray[i] == "" && injectedArray[j] != "") {
-                baseArray[i] = injectedArray[j];
-            }
-        }
-    }
-
-    private boolean isComplete(String[] message) {
-        // Para determinar si el mensaje esta completo o no
-        boolean hasContent = false;
-        // Checkeo de no tener una palabra y a continuacion un espacio ["este", ""]
-        for (int i = 0; i < message.length-1; i++) {
-            if (!message[i].isEmpty() && message[i+1].isEmpty()) {
-                return false;
-            }
-            if (!message[i].isEmpty()) {
-                hasContent = true;
-            }
-        }
-        // Checkeo de que la ultima palabra haya podido ser determinada
-        if (hasContent && message[message.length-1].isEmpty())
-            return false;
-        return true;
-    }
-
-    // utils for getLocation
-    public Position sumPos(Position pos1, Position pos2) {
-        return new Position(pos1.getX() + pos2.getX(), pos1.getY() + pos2.getY());
-    }
-
-    public Position subPos(Position pos1, Position pos2) {
-        return new Position(pos1.getX() - pos2.getX(), pos1.getY() - pos2.getY());
-    }
-
-    public float magnitude(Position pos) {
-        return (float) Math.sqrt(pow2(pos.getX()) + pow2(pos.getY()));
-    }
-
-    private float pow2(float number) {
-        return number * number;
-    }
-
-    private Position multiEscalar(Position pos, float number) {
-        return new Position(number * pos.getX(), number * pos.getY());
-    }
-
-    private float multiPos(Position pos1, Position pos2) {
-        return pos1.getX() * pos2.getX() + pos1.getY() * pos2.getY();
-    }
-
-    private Position divEscalar(Position pos, float number) throws Exception {
-        if (number == 0)
-            throw new Exception("El divisor no puede ser 0");
-        return new Position(pos.getX() / number, pos.getY() / number);
-    }
 }

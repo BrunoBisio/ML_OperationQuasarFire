@@ -1,30 +1,47 @@
 package fuegoquasar.starwars.models;
 
-
 public class Position {
 
-    private long id;
     private float x;
     private float y;
     
+    /**
+     * @param x
+     * @param y
+     */
     public Position(float x, float y) {
         this.x = x;
         this.y = y;
     }
-    public long getId() {
-        return id;
-    }
+    
+    /**
+     * @return the x
+     */
     public float getX() {
         return x;
     }
+    
+    /**
+     * @param x the x to set
+     */
     public void setX(float x) {
         this.x = x;
     }
+    
+    /**
+     * @return the y
+     */
     public float getY() {
         return y;
     }
+    
+    /**
+     * @param y the y to set
+     */
     public void setY(float y) {
         this.y = y;
     }
+    
+    
     
 }
