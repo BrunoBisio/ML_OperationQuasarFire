@@ -1,18 +1,18 @@
 # Ejercicio Tecnico "Operación Fuego de Quasar"
 
-## Para poder correr la aplicacion en local es necesario primero crear la base de datos corriengo el siguiente comando de docker
+### Para poder correr la aplicacion en local es necesario primero crear la base de datos corriengo el siguiente comando de docker
 ```
     docker-compose up --build
 ```
 
-## Una vez que la base de datos este activa se debera correr el siguiente comando en otra consola 
+### Una vez que la base de datos este activa se debera correr el siguiente comando en otra consola
 
 ```
     mvn spring-boot:run
 ```
 ## Los endpoints expuestos por la API son:
 
-## Top Secret
+### Top Secret
 
 | Tipo | URL |
 | --- | --- |
@@ -44,7 +44,7 @@
 ```
 NOTA: Por favor respetar el orden de los satelites. En caso contrario, la ubicacion obtenida podria ser erronea.
 
-## Top Secret Split
+### Top Secret Split
 
 | Tipo | URL |
 | --- | --- |
