@@ -1,6 +1,7 @@
 # Ejercicio Tecnico "Operación Fuego de Quasar"
 
-### Para poder correr la aplicacion en local es necesario primero crear la base de datos corriengo el siguiente comando de docker
+### Para poder correr la aplicacion en local es necesario primero crear la base de datos corriengo 
+### el siguiente comando de docker
 ```
     docker-compose up --build
 ```
@@ -58,4 +59,18 @@
         "message": ["este", "", "", "mensaje", ""]
     }
 ```
-NOTA: En caso de que se carguen mas de una vez datos para un mismo satelite, se considerara como valida la ultima.
+NOTA: En caso de que se carguen mas de una vez datos para un mismo satelite, se considerara como 
+valida la ultima.
+
+## Algoritmos
+
+### GetLocation
+
+Para resolver su funcionalidad se utilizo la trilateración, que consiste en proyectar un circulo 
+sobre cada uno de los puntos y encontrar un punto donde los 3 circulos se intersecten.
+
+### GetMessage
+
+En este caso se toma el arreglo mas corto, considerandolo el mas cercano al largo real del mensaje 
+y se completan los espacios en blanco a partir de los otros mensajes, para que el desfasaje no 
+afecte el mensaje los arreglos son recorridos de atras para adelante.
