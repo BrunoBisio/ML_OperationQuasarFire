@@ -8,7 +8,7 @@
 ### Una vez que la base de datos este activa se debera correr el siguiente comando en otra consola
 
 ```
-    mvn spring-boot:run
+    mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 ## Los endpoints expuestos por la API son:
 
