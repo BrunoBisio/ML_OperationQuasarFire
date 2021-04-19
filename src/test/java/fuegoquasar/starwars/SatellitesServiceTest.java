@@ -19,7 +19,7 @@ class StarwarsApplicationTests {
 	private SatellitesService service;
 
 	@Test
-	public void getMessageTestDefault() {
+	public void getMessageTestDefault() throws Exception {
 		String[] kenobi_m = new String[] {"", "este", "es", "un", "mensaje"};
 		String[] skywalker_m = new String[] {"este", "", "un", "mensaje"};
 		String[] sato_m = new String[] {"", "", "es", "", "mensaje"};
@@ -29,7 +29,7 @@ class StarwarsApplicationTests {
 	}
 
 	@Test
-	public void getMessageTestAltered() {
+	public void getMessageTestAltered() throws Exception {
 		String[] kenobi_m = new String[] {"", "", "", "este", "", "un", ""};
 		String[] skywalker_m = new String[] {"", "este", "", "un", "mensaje"};
 		String[] sato_m = new String[] {"","","", "", "es", "", "mensaje"};
@@ -39,7 +39,7 @@ class StarwarsApplicationTests {
 	}
 
 	@Test
-	public void getMessageTestFullMessage() {
+	public void getMessageTestFullMessage() throws Exception {
 		String[] kenobi_m = new String[] {"este", "es", "un", "mensaje"};
 		String[] skywalker_m = new String[] {"este", "es", "un", "mensaje"};
 		String[] sato_m = new String[] {"este", "es", "un", "mensaje"};
@@ -49,7 +49,7 @@ class StarwarsApplicationTests {
 	}
 
 	@Test
-	public void getLocationTest() {
+	public void getLocationTest() throws Exception {
 		float kenobi_d = 721.1102f;
 		float skywalker_d = 300.0f;
 		float sato_d = 412.31058f;
