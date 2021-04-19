@@ -42,7 +42,6 @@
     }
 
 ```
-NOTA: Por favor respetar el orden de los satelites. En caso contrario, la ubicacion obtenida podria ser erronea.
 
 ### Top Secret Split
 

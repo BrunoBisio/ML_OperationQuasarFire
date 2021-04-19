@@ -23,17 +23,12 @@ public class TopSecretController {
 
     @PostMapping("/")
     public ResponseEntity<Object> index(@RequestBody SatellitesDto satellitesDto) {
-        if (satellitesDto.getSatellites().length != 3) {
-            ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND, "Por favor, ingresar solo 3 satelites");
+        try {
+            SatelliteResponse response = service.getResponse(satellitesDto.getSatellites());
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
             return new ResponseEntity<Object>(error, new HttpHeaders(), error.getStatus());
         }
-        
-        SatelliteResponse response = service.getResponse(satellitesDto.getSatellites());
-
-        if (response.equals(null)) {
-            ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND, "Ocurrio un error al tratar de calcular la posicion o de obtener el mensaje");
-            return new ResponseEntity<Object>(error, new HttpHeaders(), error.getStatus());
-        }
-        return ResponseEntity.ok(response);
     }
 }

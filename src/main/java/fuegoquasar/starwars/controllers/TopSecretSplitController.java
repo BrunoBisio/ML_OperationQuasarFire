@@ -36,12 +36,12 @@ public class TopSecretSplitController {
 
     @GetMapping("/")
     public ResponseEntity<Object> index() {
-        SatelliteResponse response = service.getResponse();
-        if (response == null) {
-            ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST, "No hay suficiente información");
+        try {
+            SatelliteResponse response = service.getResponse();
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
             return new ResponseEntity<Object>(error, new HttpHeaders(), error.getStatus());
         }
-            
-        return ResponseEntity.ok(response);
     }
 }

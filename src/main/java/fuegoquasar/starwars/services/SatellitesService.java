@@ -1,5 +1,7 @@
 package fuegoquasar.starwars.services;
 
+import java.util.HashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +39,7 @@ public class SatellitesService implements ISatellitesService {
      * de dato BigDecimal.
      */
     @Override
-    public Position getLocation(float kenobi_d, float skywalker_d, float sato_d) {
+    public Position getLocation(float kenobi_d, float skywalker_d, float sato_d) throws Exception {
         Position location;
         try {
             // P3 - P1
@@ -66,14 +68,14 @@ public class SatellitesService implements ISatellitesService {
             location = new Position(Math.round(p.getX()), Math.round(p.getY()));
         }
         catch(Exception ex) {
-            location = null;
+            throw new Exception("No se pudo calcular la posicion de la nave porta carga");
         }
         // return position
         return location;
     }
 
     @Override
-    public String getMessage(String[] kenobi_m, String[] skywalker_m, String[] sato_m) {
+    public String getMessage(String[] kenobi_m, String[] skywalker_m, String[] sato_m) throws Exception {
         String output;
         // busco el menor de los arrays
         int value = Math.min(Math.min(kenobi_m.length, skywalker_m.length), sato_m.length);
@@ -88,19 +90,6 @@ public class SatellitesService implements ISatellitesService {
     }
 
     @Override
-    public SatelliteResponse getResponse(Satellite[] satellites) {
-        SatelliteResponse response = new SatelliteResponse();
-        Position location = getLocation(satellites[0].getDistance(), satellites[1].getDistance(), satellites[2].getDistance());
-        String message = getMessage(satellites[0].getMessage(), satellites[1].getMessage(), satellites[2].getMessage());
-        if (message.equals(null) || location.equals(null)) {
-            return null;
-        }
-        response.setPosition(location);
-        response.setMessage(message);
-        return response;
-    }
-    
-    @Override
     public Satellite save(Satellite satellite, String satellite_name) {
         satellite.setName(satellite_name);
         Satellite savedSatellite = repository.save(satellite);
@@ -108,7 +97,19 @@ public class SatellitesService implements ISatellitesService {
     }
 
     @Override
-    public SatelliteResponse getResponse() {
+    public SatelliteResponse getResponse(Satellite[] satellites) throws Exception {
+        HashMap<String, Satellite> satellitesMap = new HashMap<>();
+        for (int i = 0; i < satellites.length; i++) {
+            satellitesMap.put(satellites[i].getName().toLowerCase(), satellites[i]);
+        }
+        if (satellitesMap.values().size() != 3) {
+            throw new Exception("Falta informacion de al menos 1 satelite");
+        }
+        return buildResponse(satellitesMap.get("kenobi"), satellitesMap.get("skywalker"), satellitesMap.get("sato"));
+    }
+    
+    @Override
+    public SatelliteResponse getResponse() throws Exception {
         // considero que en caso que se haya mas de una vez alguno de los satellites
         // siempre utilizo la ultima carga de cada uno
         Satellite kenobi_s = repository.findLastByName("kenobi");
@@ -116,19 +117,27 @@ public class SatellitesService implements ISatellitesService {
         Satellite sato_s = repository.findLastByName("sato");
         
         if (kenobi_s == null || skywalker_s == null || sato_s == null) {
-            return null;
+            throw new Exception("No se tiene informacion sobre al menos 1 de los satelites");
         }
 
-        return getResponse(new Satellite[]{ kenobi_s, skywalker_s, sato_s });
+        return buildResponse(kenobi_s, skywalker_s, sato_s);
     }
     
-    private static String getMessageFromArrays(String[] baseArray, String[] firstInjection, String[] secondInjection) {
+    private static String getMessageFromArrays(String[] baseArray, String[] firstInjection, String[] secondInjection) throws Exception{
         MessageUtils.addMissingWords(baseArray, firstInjection);
         MessageUtils.addMissingWords(baseArray, secondInjection);
         if (MessageUtils.isComplete(baseArray)) {
             return String.join(" ", baseArray).trim();
         }
-        return null;
+        throw new Exception("No se pudo decifrar el mensaje de ayuda");
     }
 
+    private SatelliteResponse buildResponse(Satellite kenobi_s, Satellite skywalker_s, Satellite sato_s) throws Exception {
+        SatelliteResponse response = new SatelliteResponse();
+        Position location = getLocation(kenobi_s.getDistance(), skywalker_s.getDistance(), sato_s.getDistance());
+        String message = getMessage(kenobi_s.getMessage(), skywalker_s.getMessage(), sato_s.getMessage());
+        response.setPosition(location);
+        response.setMessage(message);
+        return response;
+    }
 }
